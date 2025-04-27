@@ -111,7 +111,7 @@
       "tag": "hy2-洛杉矶-bwh",
       "server": "example.de", // 第3处修改，修改完请删除注释 你的服务器域名
       "server_port": 443,
-      "up_mbps": 200,
+      "up_mbps": 200, // 这个和下面这个两个根据你本地网络修改，线路好把这两行删了也行
       "down_mbps": 300,
       "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第4处修改，修改完请删除注释 和你服务器端 hy2 协议一致
       "tls": {
