@@ -100,7 +100,7 @@
       "server": "example.de", // 第1处修改，修改完请删除注释
       "server_port": 8388,
       "method": "2022-blake3-aes-128-gcm",
-      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第2处修改，修改完请删除注释
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第2处修改，修改完请删除注释 和你服务器端 ss 协议一致
       "multiplex": {
         "enabled": true
       }
@@ -109,14 +109,14 @@
     {
       "type": "hysteria2",
       "tag": "hy2-洛杉矶-bwh",
-      "server": "example.de", // 第3处修改，修改完请删除注释
+      "server": "example.de", // 第3处修改，修改完请删除注释 你的服务器域名
       "server_port": 443,
       "up_mbps": 200,
       "down_mbps": 300,
-      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第4处修改，修改完请删除注释
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第4处修改，修改完请删除注释 和你服务器端 hy2 协议一致
       "tls": {
         "enabled": true,
-        "server_name": "example.de" // 第5处修改，修改完请删除注释
+        "server_name": "example.de" // 第5处修改，修改完请删除注释 你的服务器域名
       }
     },
 
