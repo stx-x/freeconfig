@@ -1,0 +1,60 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "tls://8.8.8.8"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "type": "hysteria2",
+      "listen": "::",
+      "listen_port": 443,
+      "users": [
+        {
+          "password": "RRRRRRRRRRRRRRRRRRRRRRRR"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "example.de",
+        "acme": {
+          "domain": "example.de",
+          "email": "example@gmail.com",
+          "dns01_challenge": {
+            "provider": "cloudflare",
+            "api_token": "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+          }
+        }
+      }
+    },
+    {
+      "type": "shadowsocks",
+      "listen": "::",
+      "listen_port": 8388,
+      "network": "tcp",
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "multiplex": {
+        "enabled": true
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
+      }
+    ]
+  }
+}
