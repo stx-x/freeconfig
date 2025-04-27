@@ -1,0 +1,224 @@
+{
+  "log": {
+    "level": "warn"
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "google",
+        "address": "tls://8.8.8.8"
+      },
+      {
+        "tag": "ali",
+        "address": "https://223.5.5.5/dns-query",
+        "detour": "direct"
+      },
+      {
+        "tag": "local",
+        "address": "https://doh.pub/dns-query",
+        "address_resolver": "ali",
+        "detour": "direct"
+      },
+      {
+        "tag": "remote",
+        "address": "fakeip"
+      }
+    ],
+    "rules": [
+      {
+        "outbound": "any",
+        "server": "local",
+        "rewrite_ttl": 300
+      },
+      {
+        "query_type": ["A", "AAAA"],
+        "server": "remote"
+      },
+      {
+        "clash_mode": "全局",
+        "server": "google",
+        "rewrite_ttl": 900
+      },
+      {
+        "clash_mode": "直连",
+        "server": "local",
+        "rewrite_ttl": 300
+      },
+      {
+        "rule_set": "geosite-geolocation-cn",
+        "server": "local",
+        "rewrite_ttl": 300
+      },
+      {
+        "type": "logical",
+        "mode": "and",
+        "rules": [
+          {
+            "rule_set": "geosite-geolocation-!cn",
+            "invert": true
+          },
+          {
+            "rule_set": "geoip-cn"
+          }
+        ],
+        "server": "google",
+        "rewrite_ttl": 900,
+        "client_subnet": "114.114.114.114/24"
+      }
+    ],
+    "fakeip": {
+      "enabled": true,
+      "inet4_range": "198.18.0.0/15",
+      "inet6_range": "fc00::/18"
+    },
+    "independent_cache": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": ["172.19.0.1/30", "fdfe:dcba:9876::1/126"],
+      "auto_route": true,
+      "strict_route": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "selector",
+      "tag": "手动选择",
+      "outbounds": ["ss-洛杉矶-bwh", "hy2-洛杉矶-bwh", "direct", "自动测速"],
+      "default": "自动测速"
+    },
+    {
+      "type": "urltest",
+      "tag": "自动测速",
+      "outbounds": ["ss-洛杉矶-bwh", "hy2-洛杉矶-bwh"]
+    },
+    {
+      "type": "shadowsocks",
+      "tag": "ss-洛杉矶-bwh",
+      "server": "example.de",
+      "server_port": 8388,
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "multiplex": {
+        "enabled": true
+      }
+    },
+
+    {
+      "type": "hysteria2",
+      "tag": "hy2-洛杉矶-bwh",
+      "server": "example.de",
+      "server_port": 443,
+      "up_mbps": 200,
+      "down_mbps": 300,
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "tls": {
+        "enabled": true,
+        "server_name": "example.de"
+      }
+    },
+
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "inbound": "tun-in",
+        "action": "resolve"
+      },
+      {
+        "inbound": "tun-in",
+        "action": "sniff"
+      },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "protocol": "dns"
+          },
+          {
+            "port": 53
+          }
+        ],
+        "action": "hijack-dns"
+      },
+      {
+        "domain_suffix": ["infini.money"],
+        "outbound": "direct"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "全局",
+        "outbound": "手动选择"
+      },
+      {
+        "clash_mode": "直连",
+        "outbound": "direct"
+      },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "port": 853
+          },
+          {
+            "network": "udp",
+            "port": 443
+          },
+          {
+            "protocol": "stun"
+          }
+        ],
+        "action": "reject",
+        "method": "default"
+      },
+      {
+        "rule_set": ["geoip-cn", "geosite-geolocation-cn"],
+        "outbound": "direct"
+      }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "geosite-geolocation-cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-cn.srs",
+        "download_detour": "手动选择"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-geolocation-!cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs",
+        "download_detour": "手动选择"
+      },
+      {
+        "type": "remote",
+        "tag": "geoip-cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+        "download_detour": "手动选择"
+      }
+    ],
+    "auto_detect_interface": true
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "store_rdrc": true
+    },
+    "clash_api": {
+      "default_mode": "规则"
+    }
+  }
+}
