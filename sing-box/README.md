@@ -7,7 +7,7 @@
 2. 编辑配置文件
    
   - 将本文件夹下 `server-config.json` 复制到 `/etc/sing-box/config`
-编辑该文件，修改3处:
+- 编辑该文件，修改5处，
 - 密码生成可以采用命令 `openssl rand -base64 16`，
 - cloudflare tokens 的获取参见下文。
 > 可以用命令 `sing-box check -f /etc/sing-box/config` 检查是否有错误
