@@ -8,7 +8,7 @@
    
   - 将本文件夹下 `server-config.json` 复制到 `/etc/sing-box/config`
 - 编辑该文件，修改5处，
-- 密码生成可以采用命令 `openssl rand -base64 16`，
+- 密码生成可以采用命令 `openssl rand -base64 16`
 - cloudflare tokens 的获取参见下文。
 > 可以用命令 `sing-box check -f /etc/sing-box/config` 检查是否有错误
 > 
@@ -21,8 +21,8 @@
 - 其他常用命令可参考[官方安装指南](https://sing-box.sagernet.org/installation/package-manager/#repository-installation)
 
 ## 客户端
-修改客户端配置文件的 密码和域名部分，注意密码需要和相应服务器端一致。比如 ss协议的服务器和客户端要一致，hy2协议的服务器和客户端要一致。但是这两个协议可以不一致。
-- ss协议一个密码一个域名要改，hy2两个域名（两个地方填同一个域名）一个协议要改。
+修改客户端配置文件的 密码和域名部分，注意密码需要和相应服务器端一致。比如 `ss`协议的服务器和客户端要一致，`hy2`协议的服务器和客户端要一致。但是这两个协议可以不一致。
+- `ss`协议一个密码一个域名要改，`hy2`两个域名（两个地方填同一个域名）一个协议要改。
 - 根据需要修改其他部分
 
 ## Cloudflare 平台生成一个专门为 ACME 协议客户端设计的 API 令牌（Token）
