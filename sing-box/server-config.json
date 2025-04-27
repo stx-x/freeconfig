@@ -16,18 +16,18 @@
       "listen_port": 443,
       "users": [
         {
-          "password": "RRRRRRRRRRRRRRRRRRRRRRRR"
+          "password": "RRRRRRRRRRRRRRRRRRRRRRRR" // 第1处修改，修改完请删除注释
         }
       ],
       "tls": {
         "enabled": true,
-        "server_name": "example.de",
+        "server_name": "example.de",  // 第2处修改，修改完请删除注释
         "acme": {
           "domain": "example.de",
-          "email": "example@gmail.com",
+          "email": "example@gmail.com", // 第3处修改，修改完请删除注释
           "dns01_challenge": {
             "provider": "cloudflare",
-            "api_token": "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+            "api_token": "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR" // 第4处修改，修改完请删除注释
           }
         }
       }
@@ -38,7 +38,7 @@
       "listen_port": 8388,
       "network": "tcp",
       "method": "2022-blake3-aes-128-gcm",
-      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第5处修改，修改完请删除注释
       "multiplex": {
         "enabled": true
       }
