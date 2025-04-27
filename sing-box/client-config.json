@@ -97,10 +97,10 @@
     {
       "type": "shadowsocks",
       "tag": "ss-洛杉矶-bwh",
-      "server": "example.de",
+      "server": "example.de", // 第1处修改，修改完请删除注释
       "server_port": 8388,
       "method": "2022-blake3-aes-128-gcm",
-      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第2处修改，修改完请删除注释
       "multiplex": {
         "enabled": true
       }
@@ -109,14 +109,14 @@
     {
       "type": "hysteria2",
       "tag": "hy2-洛杉矶-bwh",
-      "server": "example.de",
+      "server": "example.de", // 第3处修改，修改完请删除注释
       "server_port": 443,
       "up_mbps": 200,
       "down_mbps": 300,
-      "password": "RRRRRRRRRRRRRRRRRRRRRRRR",
+      "password": "RRRRRRRRRRRRRRRRRRRRRRRR", // 第4处修改，修改完请删除注释
       "tls": {
         "enabled": true,
-        "server_name": "example.de"
+        "server_name": "example.de" // 第5处修改，修改完请删除注释
       }
     },
 
