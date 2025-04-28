@@ -18,7 +18,7 @@
 4. 查看状态和实时日志
    `sudo systemctl status sing-box`
    `sudo journalctl -u sing-box --output cat -f`
-- 如果 显示 sing-box  `enabled` 和 `activate` 两个绿色，并且日志显示sing-box正常监听，说明没问题了，正常运行。
+- 如果 显示 sing-box  `enabled` 和 `activing` 两个绿色，并且日志显示sing-box正常监听，说明没问题了，正常运行。
 - 很有可能acme token那边会出问题，这个时候先停止sing-box，用命令`sudo systemctl stop sing-box`，不然会一直用错误的token重试。重新弄个token后再试。
 - 其他常用命令可参考[官方安装指南](https://sing-box.sagernet.org/installation/package-manager/#repository-installation)
 
