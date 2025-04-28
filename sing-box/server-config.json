@@ -23,8 +23,8 @@
         "enabled": true,
         "server_name": "example.de",  // 第2处修改，修改完请删除注释。这是你服务器域名
         "acme": {
-          "domain": "example.de", // 第2处修改，修改完请删除注释。这是你服务器域名
-          "email": "example@gmail.com" // 第3处修改，修改完请删除注释。随便一个邮箱
+          "domain": "example.de", // 第3处修改，修改完请删除注释。这是你服务器域名
+          "email": "example@gmail.com" // 第4处修改，修改完请删除注释。随便一个邮箱
         }
       }
     },
