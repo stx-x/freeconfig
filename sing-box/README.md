@@ -15,9 +15,10 @@
 > 可以用命令 `sing-box format -w -c /etc/sing-box/config` 进行格式化
 3. 启用sing-box daemon服务（马上运行并且重启后会自动启动）
    `sudo systemctl enable --now sing-box`
-4. 查看状态
+4. 查看状态和实时日志
    `sudo systemctl status sing-box`
-- 如果 显示 sing-box  `enabled` 和 `activate` 两个绿色，说明没问题了，正常运行。
+   `sudo journalctl -u sing-box --output cat -f`
+- 如果 显示 sing-box  `enabled` 和 `activate` 两个绿色，并且日志显示sing-box正常监听，说明没问题了，正常运行。
 - 其他常用命令可参考[官方安装指南](https://sing-box.sagernet.org/installation/package-manager/#repository-installation)
 
 ## 客户端
