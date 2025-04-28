@@ -10,9 +10,9 @@
 - 编辑该文件，修改5处，
 - 密码生成可以采用命令 `openssl rand -base64 16`
 - cloudflare tokens 的获取参见下文。
-> 可以用命令 `sing-box check -f /etc/sing-box/config` 检查是否有错误
+> 可以用命令 `sing-box check -c /etc/sing-box/config` 检查是否有错误
 > 
-> 可以用命令 `sing-box format -w -f /etc/sing-box/config` 进行格式化
+> 可以用命令 `sing-box format -w -c /etc/sing-box/config` 进行格式化
 3. 启用sing-box daemon服务（马上运行并且重启后会自动启动）
    `sudo systemctl enable --now sing-box`
 4. 查看状态
