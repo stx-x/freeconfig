@@ -1,0 +1,19 @@
+listen: :8443
+
+acme:
+  domains:
+    - example.domain.com
+  email: 9999@duck.com
+
+auth:
+  type: password
+  password: 1I5L/B1JHV0EmfUT3QxM5Q==
+
+masquerade:
+  type: proxy
+  proxy:
+    url: https://lapl.org # 挑一个靠近你服务器的网站
+    rewriteHost: true
+  listenHTTP: :8080
+  listenHTTPS: :8443
+  forceHTTPS: true
