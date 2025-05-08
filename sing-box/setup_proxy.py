@@ -46,6 +46,10 @@ def setup_system_parameters():
 
 def setup_port_forwarding():
     print("正在设置端口转发...")
+    
+    # 确保目录存在
+    run_command("mkdir -p /etc/nftables.d")
+    
     nft_script = """#!/usr/sbin/nft -f
 table ip nat {
     chain prerouting {
@@ -60,8 +64,29 @@ table ip nat {
     with open("/etc/nftables.d/port-forward.nft", "w") as f:
         f.write(nft_script)
     
-    # 确保目录存在
-    run_command("mkdir -p /etc/nftables.d")
+    # 检查主配置文件是否存在
+    if not os.path.exists("/etc/nftables.conf"):
+        print("警告: /etc/nftables.conf 不存在，创建默认配置")
+        default_config = """#!/usr/sbin/nft -f
+flush ruleset
+
+table inet filter {
+    chain input {
+        type filter hook input priority 0;
+        policy accept;
+    }
+    chain forward {
+        type filter hook forward priority 0;
+        policy accept;
+    }
+    chain output {
+        type filter hook output priority 0;
+        policy accept;
+    }
+}
+"""
+        with open("/etc/nftables.conf", "w") as f:
+            f.write(default_config)
     
     # 检查主配置文件是否已包含我们的规则文件
     include_line = 'include "/etc/nftables.d/port-forward.nft"'
