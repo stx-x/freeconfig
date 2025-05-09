@@ -12,7 +12,7 @@ import time
 import logging
 import socket
 from dataclasses import dataclass
-from typing import Tuple, Optional, List, Dict
+from typing import Tuple, Optional, Dict, Any
 from enum import Enum, auto
 
 # 颜色定义
@@ -39,7 +39,6 @@ LOG_COLORS = {
 class LogFormatter(logging.Formatter):
     """自定义日志格式化器"""
     def format(self, record: logging.LogRecord) -> str:
-        # 添加颜色
         if record.levelno in LOG_COLORS:
             record.msg = f"{LOG_COLORS[record.levelno]}{record.msg}{Colors.ENDC}"
         return super().format(record)
@@ -66,20 +65,51 @@ class Config:
 class ProxySetup:
     """代理服务器配置类"""
     
+    # 常量定义
+    SERVER_CONFIG_PATH = "/etc/sing-box/config.json"
+    CLIENT_CONFIG_DIR = "/etc/sing-box/client"
+    SYSCTL_CONF = "/etc/sysctl.d/99-sysctl.conf"
+    NFTABLES_CONF = "/etc/nftables.conf"
+    NFTABLES_RULES_DIR = "/etc/nftables.d"
+    PORT_FORWARD_RULES = "/etc/nftables.d/port-forward.nft"
+    
+    # 系统参数
+    SYSCTL_PARAMS = [
+        "net.core.rmem_max=2500000",
+        "net.core.wmem_max=2500000",
+        "net.ipv4.tcp_congestion_control=bbr",
+        "net.ipv4.tcp_fastopen=3",
+        "net.ipv4.tcp_slow_start_after_idle=0",
+        "net.ipv4.tcp_notsent_lowat=16384",
+        "net.ipv4.tcp_mtu_probing=1",
+        "net.ipv4.tcp_rmem='4096 87380 16777216'",
+        "net.ipv4.tcp_wmem='4096 87380 16777216'",
+        "net.core.default_qdisc=fq"
+    ]
+    
+    # 依赖项
+    DEPENDENCIES = {
+        "socat": "socat",
+        "nft": "nftables",
+        "curl": "curl",
+        "wget": "wget",
+        "cron": "cron",
+        "openssl": "openssl"
+    }
+    
     def __init__(self):
         """初始化配置类"""
         self._setup_logging()
         self.config: Optional[Config] = None
         self.is_sudo: bool = False
         self.work_dir: str = os.path.abspath(os.getcwd())
-        self.client_config_path: str = os.path.join(self.work_dir, "config.json")
+        self.client_config_path: str = os.path.join(self.CLIENT_CONFIG_DIR, "config.json")
 
     def _setup_logging(self) -> None:
         """配置日志系统"""
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         
-        # 控制台处理器
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(LogFormatter(
             '%(asctime)s - %(levelname)s - %(message)s',
@@ -128,6 +158,22 @@ class ProxySetup:
         except subprocess.CalledProcessError as e:
             return False, e.stderr
 
+    def _get_unique_filename(self, base_path: str) -> str:
+        """获取唯一的文件名，如果文件已存在则添加数字后缀"""
+        if not os.path.exists(base_path):
+            return base_path
+            
+        directory = os.path.dirname(base_path)
+        filename = os.path.basename(base_path)
+        name, ext = os.path.splitext(filename)
+        
+        counter = 1
+        while True:
+            new_path = os.path.join(directory, f"{name}_{counter}{ext}")
+            if not os.path.exists(new_path):
+                return new_path
+            counter += 1
+
     def _print_welcome(self) -> None:
         """打印欢迎信息"""
         self.logger.info(f"""
@@ -162,17 +208,8 @@ class ProxySetup:
         """检查并安装依赖"""
         self.logger.info("检查系统依赖...")
         
-        deps = {
-            "socat": "socat",
-            "nft": "nftables",
-            "curl": "curl",
-            "wget": "wget",
-            "cron": "cron",
-            "openssl": "openssl"
-        }
-
         missing = [
-            pkg for cmd, pkg in deps.items()
+            pkg for cmd, pkg in self.DEPENDENCIES.items()
             if not self._run_command(f"which {cmd}")[0]
         ]
 
@@ -197,35 +234,20 @@ class ProxySetup:
         """配置系统参数"""
         self.logger.info("配置系统参数...")
         
-        params = [
-            "net.core.rmem_max=2500000",
-            "net.core.wmem_max=2500000",
-            "net.ipv4.tcp_congestion_control=bbr",
-            "net.ipv4.tcp_fastopen=3",
-            "net.ipv4.tcp_slow_start_after_idle=0",
-            "net.ipv4.tcp_notsent_lowat=16384",
-            "net.ipv4.tcp_mtu_probing=1",
-            "net.ipv4.tcp_rmem='4096 87380 16777216'",
-            "net.ipv4.tcp_wmem='4096 87380 16777216'",
-            "net.core.default_qdisc=fq"
-        ]
-
-        sysctl_conf = "/etc/sysctl.d/99-sysctl.conf"
         existing_params = set()
-        
-        if os.path.exists(sysctl_conf):
-            with open(sysctl_conf, "r") as f:
+        if os.path.exists(self.SYSCTL_CONF):
+            with open(self.SYSCTL_CONF, "r") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#"):
                         existing_params.add(line)
 
-        with open(sysctl_conf, "a") as f:
-            for param in params:
+        with open(self.SYSCTL_CONF, "a") as f:
+            for param in self.SYSCTL_PARAMS:
                 if param not in existing_params:
                     f.write(f"\n{param}")
 
-        for param in params:
+        for param in self.SYSCTL_PARAMS:
             if not self._run_command(f"sysctl -w {param}")[0]:
                 self.logger.warning(f"参数设置失败: {param}")
 
@@ -235,7 +257,7 @@ class ProxySetup:
         """配置端口转发"""
         self.logger.info("配置端口转发...")
 
-        self._run_command("mkdir -p /etc/nftables.d")
+        self._run_command(f"mkdir -p {self.NFTABLES_RULES_DIR}")
 
         nft_script = """#!/usr/sbin/nft -f
 table ip nat {
@@ -247,15 +269,13 @@ table ip nat {
 }
 """
 
-        port_forward_file = "/etc/nftables.d/port-forward.nft"
-        if not os.path.exists(port_forward_file):
-            with open(port_forward_file, "w") as f:
+        if not os.path.exists(self.PORT_FORWARD_RULES):
+            with open(self.PORT_FORWARD_RULES, "w") as f:
                 f.write(nft_script)
         else:
             self.logger.info("端口转发规则已存在")
 
-        nftables_conf = "/etc/nftables.conf"
-        if not os.path.exists(nftables_conf):
+        if not os.path.exists(self.NFTABLES_CONF):
             default_config = """#!/usr/sbin/nft -f
 flush ruleset
 
@@ -274,21 +294,21 @@ table inet filter {
     }
 }
 """
-            with open(nftables_conf, "w") as f:
+            with open(self.NFTABLES_CONF, "w") as f:
                 f.write(default_config)
         else:
             self.logger.info("nftables配置已存在")
 
-        include_line = 'include "/etc/nftables.d/port-forward.nft"'
-        with open(nftables_conf, "r") as f:
+        include_line = f'include "{self.PORT_FORWARD_RULES}"'
+        with open(self.NFTABLES_CONF, "r") as f:
             content = f.read()
 
         if include_line not in content:
-            with open(nftables_conf, "a") as f:
+            with open(self.NFTABLES_CONF, "a") as f:
                 f.write(f"\n{include_line}\n")
             self.logger.info("添加端口转发规则")
 
-        return self._run_command("nft -f /etc/nftables.conf")[0]
+        return self._run_command(f"nft -f {self.NFTABLES_CONF}")[0]
 
     def _setup_acme(self) -> bool:
         """配置acme.sh"""
@@ -382,33 +402,9 @@ table inet filter {
 
         return True
 
-    def _get_unique_filename(self, base_path: str) -> str:
-        """获取唯一的文件名，如果文件已存在则添加数字后缀"""
-        if not os.path.exists(base_path):
-            return base_path
-            
-        directory = os.path.dirname(base_path)
-        filename = os.path.basename(base_path)
-        name, ext = os.path.splitext(filename)
-        
-        counter = 1
-        while True:
-            new_path = os.path.join(directory, f"{name}_{counter}{ext}")
-            if not os.path.exists(new_path):
-                return new_path
-            counter += 1
-
-    def _setup_proxy(self) -> bool:
-        """配置代理服务"""
-        self.logger.info("配置代理服务...")
-
-        if not self._run_command("sing-box version")[0]:
-            self.logger.info("安装sing-box...")
-            if not self._run_command("curl -fsSL https://sing-box.app/install.sh | sh")[0]:
-                self.logger.error("sing-box安装失败")
-                return False
-
-        config = {
+    def _get_server_config(self) -> Dict[str, Any]:
+        """获取服务器配置"""
+        return {
             "inbounds": [
                 {
                     "type": "shadowsocks",
@@ -435,12 +431,10 @@ table inet filter {
             "outbounds": [{"type": "direct"}]
         }
 
-        os.makedirs("/etc/sing-box", exist_ok=True)
-        with open("/etc/sing-box/config.json", "w") as f:
-            json.dump(config, f, indent=2)
-
+    def _get_client_config(self) -> Dict[str, Any]:
+        """获取客户端配置"""
         subdomain = self.config.domain.split('.')[0]
-        client_config = {
+        return {
             "outbounds": [
                 {
                     "type": "urltest",
@@ -472,13 +466,31 @@ table inet filter {
             ]
         }
 
-        # 获取唯一的文件名
+    def _setup_proxy(self) -> bool:
+        """配置代理服务"""
+        self.logger.info("配置代理服务...")
+
+        if not self._run_command("sing-box version")[0]:
+            self.logger.info("安装sing-box...")
+            if not self._run_command("curl -fsSL https://sing-box.app/install.sh | sh")[0]:
+                self.logger.error("sing-box安装失败")
+                return False
+
+        # 创建客户端配置目录
+        os.makedirs(self.CLIENT_CONFIG_DIR, exist_ok=True)
+
+        # 保存服务器配置
+        os.makedirs("/etc/sing-box", exist_ok=True)
+        with open(self.SERVER_CONFIG_PATH, "w") as f:
+            json.dump(self._get_server_config(), f, indent=2)
+
+        # 保存客户端配置
         self.client_config_path = self._get_unique_filename(self.client_config_path)
-        if self.client_config_path != os.path.join(self.work_dir, "config.json"):
+        if self.client_config_path != os.path.join(self.CLIENT_CONFIG_DIR, "config.json"):
             self.logger.info(f"配置文件已存在，将保存为: {os.path.basename(self.client_config_path)}")
 
         with open(self.client_config_path, "w") as f:
-            json.dump(client_config, f, indent=2)
+            json.dump(self._get_client_config(), f, indent=2)
 
         return True
 
@@ -523,9 +535,12 @@ table inet filter {
 {Colors.YELLOW}  • 配置文件: {self.client_config_path}{Colors.ENDC}
 {Colors.YELLOW}  • 确保域名解析正确{Colors.ENDC}
 
+{Colors.BOLD}客户端完整配置：{Colors.ENDC}
+{Colors.CYAN}{json.dumps(self._get_client_config(), indent=2)}{Colors.ENDC}
+
 {Colors.BOLD}注意事项：{Colors.ENDC}
 {Colors.GREEN}  • 证书自动续期{Colors.ENDC}
-{Colors.GREEN}  • 配置文件: /etc/sing-box/config.json{Colors.ENDC}
+{Colors.GREEN}  • 配置文件: {self.SERVER_CONFIG_PATH}{Colors.ENDC}
 {Colors.BOLD}{Colors.HEADER}{'='*60}{Colors.ENDC}
 """)
 
