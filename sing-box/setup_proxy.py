@@ -71,6 +71,8 @@ class ProxySetup:
         self._setup_logging()
         self.config: Optional[Config] = None
         self.is_sudo: bool = False
+        self.work_dir: str = os.path.abspath(os.getcwd())
+        self.client_config_path: str = os.path.join(self.work_dir, "config.json")
 
     def _setup_logging(self) -> None:
         """配置日志系统"""
@@ -380,6 +382,22 @@ table inet filter {
 
         return True
 
+    def _get_unique_filename(self, base_path: str) -> str:
+        """获取唯一的文件名，如果文件已存在则添加数字后缀"""
+        if not os.path.exists(base_path):
+            return base_path
+            
+        directory = os.path.dirname(base_path)
+        filename = os.path.basename(base_path)
+        name, ext = os.path.splitext(filename)
+        
+        counter = 1
+        while True:
+            new_path = os.path.join(directory, f"{name}_{counter}{ext}")
+            if not os.path.exists(new_path):
+                return new_path
+            counter += 1
+
     def _setup_proxy(self) -> bool:
         """配置代理服务"""
         self.logger.info("配置代理服务...")
@@ -454,7 +472,12 @@ table inet filter {
             ]
         }
 
-        with open("config.json", "w") as f:
+        # 获取唯一的文件名
+        self.client_config_path = self._get_unique_filename(self.client_config_path)
+        if self.client_config_path != os.path.join(self.work_dir, "config.json"):
+            self.logger.info(f"配置文件已存在，将保存为: {os.path.basename(self.client_config_path)}")
+
+        with open(self.client_config_path, "w") as f:
             json.dump(client_config, f, indent=2)
 
         return True
@@ -497,7 +520,7 @@ table inet filter {
 {Colors.CYAN}  • Hysteria2: 8443 (UDP){Colors.ENDC}
 
 {Colors.BOLD}客户端配置：{Colors.ENDC}
-{Colors.YELLOW}  • 配置文件: config.json{Colors.ENDC}
+{Colors.YELLOW}  • 配置文件: {self.client_config_path}{Colors.ENDC}
 {Colors.YELLOW}  • 确保域名解析正确{Colors.ENDC}
 
 {Colors.BOLD}注意事项：{Colors.ENDC}
@@ -541,7 +564,7 @@ table inet filter {
             acme_dir=""
         )
 
-        self.logger.info(f"\n\n{Colors.BOLD}开始配置...{Colors.ENDC}\n{Colors.HEADER}{'='*60}{Colors.ENDC}")
+        self.logger.info(f"\n{Colors.BOLD}开始配置...{Colors.ENDC}\n{Colors.HEADER}{'='*60}{Colors.ENDC}")
 
         steps = [
             (self._check_dependencies, SetupStep.DEPENDENCIES),
